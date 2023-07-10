@@ -6,68 +6,50 @@ namespace App;
 
 class Rover
 {
-    private string $direction;
-    private int $y;
-    private int $x;
+    const DISPLACEMENT = 1;
+    private Direction $direction;
+    private Coordinates $coordinates;
 
     public function __construct(int $x, int $y, string $direction)
     {
-        $this->direction = $direction;
-        $this->y = $y;
-        $this->x = $x;
+        $this->direction = Direction::create($direction);
+        $this->coordinates = new Coordinates($y, $x);
     }
 
     public function receive(string $commandsSequence): void
     {
+        $commands = $this->extractCommandsFrom($commandsSequence);
+        $this->processCommands($commands);
+
+    }
+
+    private function processCommand($command): void
+    {
+        if ($command === "l") {
+            $this->direction = $this->direction->rotateLeft();
+        } else if ($command === "r") {
+            $this->direction = $this->direction->rotateRight();
+        } else if ($command === "f") {
+            $this->coordinates = $this->direction->move(self::DISPLACEMENT, $this->coordinates);
+        } else {
+            $this->coordinates = $this->direction->move(-self::DISPLACEMENT, $this->coordinates);
+        }
+    }
+
+    private function extractCommandsFrom(string $commandsSequence): array
+    {
         $commandsSequenceLenght = strlen($commandsSequence);
+        $commands = [];
         for ($i = 0; $i < $commandsSequenceLenght; ++$i) {
-            $command = substr($commandsSequence, $i, 1);
-            if ($command === "l" || $command === "r") {
-                // Rotate Rover
-                if ($this->direction === "N") {
-                    if ($command === "r") {
-                        $this->direction = "E";
-                    } else {
-                        $this->direction = "W";
-                    }
-                } else if ($this->direction === "S") {
-                    if ($command === "r") {
-                        $this->direction = "W";
-                    } else {
-                        $this->direction = "E";
-                    }
-                } else if ($this->direction === "W") {
-                    if ($command === "r") {
-                        $this->direction = "N";
-                    } else {
-                        $this->direction = "S";
-                    }
-                } else {
-                    if ($command === "r") {
-                        $this->direction = "S";
-                    } else {
-                        $this->direction = "N";
-                    }
-                }
-            } else {
-                // Displace Rover
-                $displacement1 = -1;
+            $commands[] = substr($commandsSequence, $i, 1);
+        }
+        return $commands;
+    }
 
-                if ($command === "f") {
-                    $displacement1 = 1;
-                }
-                $displacement = $displacement1;
-
-                if ($this->direction === "N") {
-                    $this->y += $displacement;
-                } else if ($this->direction === "S") {
-                    $this->y -= $displacement;
-                } else if ($this->direction === "W") {
-                    $this->x -= $displacement;
-                } else {
-                    $this->x += $displacement;
-                }
-            }
+    private function processCommands(array $commands): void
+    {
+        foreach ($commands as $command) {
+            $this->processCommand($command);
         }
     }
 }
